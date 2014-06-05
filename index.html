@@ -1,0 +1,76 @@
+<!doctype html5>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link href="http://code.jquery.com/ui/1.9.2/themes/smoothness/jquery-ui.css" rel="stylesheet" type="text/css" />
+    <style>
+      body {
+        font-family: monospace;
+        background-color: #031634;
+        color: #E8DDCB;
+      }
+
+      #slider {
+        width: 30%;
+        margin: 0 auto;
+      }
+
+      .device {
+        magin: 0;
+        padding: 0;
+        font-size: 64px;
+        text-align: center;
+        position: relative;
+        top: 50%;
+        margin-top: -32px;
+        line-height: 32px;
+        font-weight: normal;
+      }
+
+      .temp {
+        font-weight: bold;
+        color: #CDB380;
+      }
+
+      .temp:after {
+        content: ' °C';
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1 class="device">Device #1: <span class="temp" data-role="temperature" data-id="1">0,00</span></h1>
+    <br>
+    <h1 class="device">Device #2: <span class="temp" data-role="temperature" data-id="2">0,00</span></h1>
+
+    <div id="slider"></div>
+
+    <script src="http://underscorejs.org/underscore-min.js"></script>
+    <script src="http://code.jquery.com/jquery-1.8.3.min.js"></script>
+    <script src="http://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io.connect('http://localhost:3334');
+
+      function updateLatestTemperatures(history) {
+        $('[data-role=temperature]').each(function(){
+          deviceId = $(this).data('id');
+          temp = _.chain(history).where({ device: deviceId }).last().value().temp
+          $(this).html(temp)
+        })
+      }
+
+      function updatePwm(e) {
+        val = $("#slider").slider('value');
+        toPwm = Math.ceil(val * 2.55);
+        socket.emit('change-pwm', toPwm);
+      }
+
+      $("#slider").slider({
+        slide: updatePwm
+      });
+
+      socket.on('change-temp', updateLatestTemperatures);
+    </script>
+  </body>
+</html>
