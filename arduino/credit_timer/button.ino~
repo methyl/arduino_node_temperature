@@ -1,0 +1,48 @@
+#include "BlinkingDiode.h";
+#include "CreditBank.h";
+
+const int buttonPin = 12;
+const int switchPin = 5;
+const int creditLedPin = 6;
+
+int buttonState;
+bool isRunning = false;
+unsigned long currentTime, finishTime;
+BlinkingDiode diode(switchPin, 500);
+CreditBank bank;
+
+unsigned int getTimeForCredits(int credits) {
+  return credits * 1000; // one credit is one second
+}
+
+void setup() {
+  pinMode(switchPin, OUTPUT);
+  pinMode(creditLedPin, OUTPUT);
+  pinMode(buttonPin, INPUT);
+  Serial.begin(9600);
+  Serial.setTimeout(500);
+  bank.addCredits(5);
+}
+
+void loop() {
+  currentTime = millis();
+  buttonState = digitalRead(buttonPin);
+
+  if (Serial.available() > 0) {
+    bank.addCredits(Serial.parseInt());
+    digitalWrite(creditLedPin, HIGH);
+    delay(100);
+    digitalWrite(creditLedPin, LOW);
+  }
+
+  if (bank.getSeconds() > 0) {
+    if (buttonState == HIGH) {
+      diode.start();
+      bank.start();
+    }
+  } else
+    diode.stop();
+
+  diode.run();
+  bank.run();
+}
